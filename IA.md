@@ -1,0 +1,1 @@
+# Declaração de uso de IA
