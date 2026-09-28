@@ -14,3 +14,15 @@
 | Infraestrutura como código | Terraform | ~> 1.9 | Ferramenta padrão de mercado com provider oficial maduro para AWS; escolhida no lugar do OpenTofu por familiaridade do grupo. |
 | Provider do Terraform | hashicorp/aws | ~> 5.0 | Provider oficial da HashiCorp, com suporte completo aos recursos exigidos (VPC, sub-redes, NAT Gateway, Security Groups, EC2, Elastic IP). |
 | Instalação da aplicação | ECS task definitions (pull direto do Docker Hub) | - | Como as imagens de frontend e backend já estão publicadas no Docker Hub, a instalação não exige script de build nem Ansible: o ECS Agent apenas puxa a imagem e sobe o container conforme a task definition, o que também simplifica recriar o ambiente entre sessões de teste (seção 5.9). |
+
+## 5.7 Dimensionamento das instâncias
+
+O requisito não funcional definido pelo grupo (seção 5.1) é de **1 usuário simultâneo**, sem exigência de alta disponibilidade nesta entrega. Por isso o dimensionamento abaixo prioriza o menor custo mensal compatível com a carga, e não throughput ou concorrência.
+
+Todas as instâncias usam a família **t3** (CPU baseada em créditos), adequada a uma carga majoritariamente ociosa com picos curtos por requisição — típica de 1 usuário simultâneo.
+
+| Componente | Família | Tipo | vCPU | Memória | Disco (tipo e tamanho) | Sub-rede | Justificativa |
+|---|---|---|---|---|---|---|---|
+| Nginx (proxy público) | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 20 GiB | Pública (com Elastic IP) | TODO |
+| Host ECS (frontend x2 + backend x2) | t3 (CPU baseada em créditos) | t3.medium | 2 | 4 GiB | gp3, 30 GiB | Privada | TODO |
+| PostgreSQL | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 30 GiB | Privada | TODO |
