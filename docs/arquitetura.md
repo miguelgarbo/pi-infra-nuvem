@@ -1,5 +1,56 @@
 # Seções 5.1 a 5.7, 5.9 e 5.10
 
+# 5 Descrição da Aplicação e Arquitetura
+
+## 5.1 Descrição e Problema Resolvido pela Aplicação
+
+A aplicação é um sistema web para gerenciamento e reserva de aluguel de carros. Ela resolve a burocracia do controle manual de frotas e a falta de transparência no cálculo de valores, automatizando a gestão de veículos para a empresa e permitindo que os clientes calculem custos em tempo real, façam reservas online e acompanhem seu histórico de locações.
+
+## Perfis de Usuários
+O sistema possue dois tipos de usuários com permissões distintas:
+
+* **Administrador:** Responsável pela manutenção e alimentação do banco de dados (cadastro, edição e remoção de veículos e seus respectivos atributos). Possui privilégios de acesso para gerenciar a maioria das rotas administrativas do sistema.
+* **Locatário:** Cliente final que utiliza o sistema para visualizar o catálogo de veículos disponíveis, simular o valor final do aluguel de acordo com o período selecionado, efetivar a reserva e consultar seu histórico de locações.
+
+## Funcionalidades Principais
+* **Gestão de Frota (Admin):** Cadastro, atualização e controle de status dos veículos disponíveis.
+* **Controle de Acesso:** Autenticação e autorização diferenciando as rotas de administrador e locatário.
+* **Simulação e Cálculo de Aluguel:** Ferramenta que calcula o valor total da reserva com base nas diárias/período escolhido pelo locatário.
+* **Aluguel de Carros:** Fluxo para o locatário confirmar o aluguel do veículo selecionado.
+* **Histórico de Locações:** Painel no qual o locatário acompanha suas reservas passadas e ativas.
+
+## Componentes Técnicos
+A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via API RESTful):
+
+* **Frontend:** Desenvolvido em **React** com o empacotador **Vite**, responsável por renderizar uma interface dinâmica, leve e responsiva no navegador do usuário (*Single Page Application*).
+* **Backend:** Desenvolvido em **Java** com **Spring Boot**, responsável pelas regras de negócio, rotas REST e segurança. Utiliza **Spring Security** em conjunto com **JWT** (JSON Web Tokens) para autenticação stateless e controle de autorização baseado em perfis (RBAC).
+* **Banco de Dados:** **PostgreSQL**, banco relacional responsável pela persistência durável dos dados da aplicação (usuários, veículos, alugueis e auditoria de ações).
+
+---
+
+## Requisitos Não-Funcionais Assumidos
+
+### Estimativa de Carga e Usuários Simultâneos
+* **RNF01 – Usuários Simultâneos:** O sistema foi dimensionado para suportar até **50 usuários simultâneos** em regime normal de operação (cenário compatível com uma empresa local de aluguel de carros de pequeno a médio porte).
+
+### Disponibilidade e Análise de Arquitetura
+* **RNF02 – Disponibilidade Esperada:** O sistema almeja um nível de disponibilidade estimado em **99,0%** em ambiente de execução regular.
+* **Análise de Alta Disponibilidade (HA)**: A arquitetura proposta adota redundância na camada de aplicação, prevendo a execução de 2 instâncias (tasks) para o frontend e 2 instâncias (tasks) para o backend gerenciadas via Amazon ECS, com um servidor NGINX atuando como reverse proxy e distribuidor de tráfego na subnet pública.
+
+### Desempenho
+* **RNF03 – Tempo de Resposta:** As consultas ao catálogo de veículos e o cálculo do valor da locação devem retornar respostas para o *frontend* em um tempo máximo de **2 segundos** para requisições sob carga normal.
+
+### Segurança
+* **RNF04 – Autenticação e Autorização:** A autenticação do sistema deve ser realizada via tokens JWT transmitidos no cabeçalho das requisições HTTP, garantindo que apenas usuários com a role de Admin acessem as rotas protegidas.
+
+* **RNF05 – Criptografia de Credenciais:** As senhas dos usuários devem ser armazenadas no PostgreSQL de forma segura usando algoritmo de *hash* (como BCrypt), nunca em texto plano.
+
+### Usabilidade e Arquitetura
+* **RNF06 – Interface Responsiva:** O *frontend* deve se adaptar adequadamente a telas de computadores e dispositivos móveis.
+* **RNF07 – Desacoplamento via JSON:** A comunicação entre o cliente (React) e o servidor (Spring Boot) deve ocorrer estritamente por meio do protocolo HTTP/HTTPS utilizando payload no formato JSON.
+
+
+
 ## 5.6 Tecnologias
 
 | Camada | Tecnologia | Versão | Justificativa |
