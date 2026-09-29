@@ -50,6 +50,15 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 * **RNF07 – Desacoplamento via JSON:** A comunicação entre o cliente (React) e o servidor (Spring Boot) deve ocorrer estritamente por meio do protocolo HTTP/HTTPS utilizando payload no formato JSON.
 
 
+## 5.3 Tabela de Plano de Enderaçamento IP
+
+| Recurso | Nome | CIDR | Faixa de IP | Zona | Tipo | Finalidade |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **VPC - Rede Virtual Privada** | `vpc-pi-infra` | `10.50.0.0/24` | `10.50.0.0 -> 10.50.0.255` | `us-east-2` | - | Rede Privada do Projeto |
+| **Sub-rede da VPC** | `pb-subnet` | `10.50.0.0/28` | `10.50.0.0 -> 10.50.0.15` | `us-east-2a` | Pública | Proxy Reverso e Load Balancer |
+| **Sub-rede da VPC** | `pv-subnet` | `10.50.0.16/28` | `10.50.0.16 -> 10.50.0.31` | `us-east-2a` | Privada | Frontend, Backend, Banco de dados |
+
+
 
 ## 5.6 Tecnologias
 
