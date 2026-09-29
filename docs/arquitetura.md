@@ -1,4 +1,8 @@
-# Seções 5.1 a 5.7, 5.9 e 5.10
+Seções Contidas no Documento Atualmente:
+5.1, 5.3, 5.4, 5.6, 5.7, 5.9 e 5.10
+
+Faltam:
+5.5 e 5.7
 
 # 5 Descrição da Aplicação e Arquitetura
 
@@ -9,7 +13,7 @@ A aplicação é um sistema web para gerenciamento e reserva de aluguel de carro
 ## Perfis de Usuários
 O sistema possue dois tipos de usuários com permissões distintas:
 
-* **Administrador:** Responsável pela manutenção e alimentação do banco de dados (cadastro, edição e remoção de veículos e seus respectivos atributos). Possui privilégios de acesso para gerenciar a maioria das rotas administrativas do sistema.
+* **Administrador:** Responsável pela manutenção e alimentação do banco de dados. Possui privilégios de acesso para gerenciar a maioria das rotas administrativas do sistema.
 * **Locatário:** Cliente final que utiliza o sistema para visualizar o catálogo de veículos disponíveis, simular o valor final do aluguel de acordo com o período selecionado, efetivar a reserva e consultar seu histórico de locações.
 
 ## Funcionalidades Principais
@@ -30,24 +34,18 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 
 ## Requisitos Não-Funcionais Assumidos
 
-### Estimativa de Carga e Usuários Simultâneos
 * **RNF01 – Usuários Simultâneos:** O sistema foi dimensionado para suportar até **50 usuários simultâneos** em regime normal de operação (cenário compatível com uma empresa local de aluguel de carros de pequeno a médio porte).
 
-### Disponibilidade e Análise de Arquitetura
-* **RNF02 – Disponibilidade Esperada:** O sistema almeja um nível de disponibilidade estimado em **99,0%** em ambiente de execução regular.
-* **Análise de Alta Disponibilidade (HA)**: A arquitetura proposta adota redundância na camada de aplicação, prevendo a execução de 2 instâncias (tasks) para o frontend e 2 instâncias (tasks) para o backend gerenciadas via Amazon ECS, com um servidor NGINX atuando como reverse proxy e distribuidor de tráfego na subnet pública.
+* **RNF02 – Disponibilidade Esperada:** O sistema almeja um nível de disponibilidade estimado em **99,0%** em ambiente de execução regular. **Análise de Alta Disponibilidade (HA)**: A arquitetura proposta adota redundância na camada de aplicação, prevendo a execução de 2 instâncias (tasks) para o frontend e 2 instâncias (tasks) para o backend gerenciadas via Amazon ECS, com um servidor NGINX atuando como reverse proxy e distribuidor de tráfego na subnet pública.
 
-### Desempenho
 * **RNF03 – Tempo de Resposta:** As consultas ao catálogo de veículos e o cálculo do valor da locação devem retornar respostas para o *frontend* em um tempo máximo de **2 segundos** para requisições sob carga normal.
 
-### Segurança
 * **RNF04 – Autenticação e Autorização:** A autenticação do sistema deve ser realizada via tokens JWT transmitidos no cabeçalho das requisições HTTP, garantindo que apenas usuários com a role de Admin acessem as rotas protegidas.
 
 * **RNF05 – Criptografia de Credenciais:** As senhas dos usuários devem ser armazenadas no PostgreSQL de forma segura usando algoritmo de *hash* (como BCrypt), nunca em texto plano.
 
-### Usabilidade e Arquitetura
 * **RNF06 – Interface Responsiva:** O *frontend* deve se adaptar adequadamente a telas de computadores e dispositivos móveis.
-* **RNF07 – Desacoplamento via JSON:** A comunicação entre o cliente (React) e o servidor (Spring Boot) deve ocorrer estritamente por meio do protocolo HTTP/HTTPS utilizando payload no formato JSON.
+
 
 
 ## 5.3 Tabela de Plano de Enderaçamento IP
@@ -58,6 +56,40 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 | **Sub-rede da VPC** | `pb-subnet` | `10.50.0.0/28` | `10.50.0.0 -> 10.50.0.15` | `us-east-2a` | Pública | Proxy Reverso e Load Balancer |
 | **Sub-rede da VPC** | `pv-subnet` | `10.50.0.16/28` | `10.50.0.16 -> 10.50.0.31` | `us-east-2a` | Privada | Frontend, Backend, Banco de dados |
 
+
+## 5.4 Tabelas de Roteamento
+
+As tabelas de roteamento definem as regras de encaminhamento do tráfego IP dentro da VPC `vpc-pi-infra`
+
+### 1. Tabela de Rotas da Sub-rede Pública (`pb-subnet-rt`)
+permite que instâncias como o proxy NGINX tenham conectividade bidirecional direta com a internet.
+
+| Destino | Alvo (*Target*) | Descrição / Finalidade |
+| :--- | :--- | :--- |
+| `10.50.0.0/24` | `local` | Roteamento interno entre todos os recursos pertencentes à VPC |
+| `0.0.0.0/0` | `Internet Gateway` (`igw-...`) | Encaminha todo o tráfego destinado à internet pública através do Internet Gateway |
+
+---
+
+### 2. Tabela de Rotas da Sub-rede Privada (`pv-subnet-rt`)
+Esta tabela está associada à sub-rede privada `10.50.0.16/28` (`pv-subnet`), onde residem os serviços de *Frontend*, *Backend* e o banco de dados PostgreSQL.
+
+| Destino | Alvo (*Target*) | Descrição / Finalidade |
+| :--- | :--- | :--- |
+| `10.50.0.0/24` | `local` | Roteamento interno entre os componentes privados e públicos da VPC. |
+| `0.0.0.0/0` | `NAT Gateway` (`nat-...`) | Permite que as instâncias privadas iniciem conexões de saída para a internet através do NAT Gateway. |
+
+---
+
+### Impacto da Ausência da Rota para o NAT Gateway
+
+Se a rota padrão (`0.0.0.0/0`) apontando para o NAT Gateway for removida da sub-rede privada, os recursos nela localizados perderão completamente o acesso de saída para a internet, deixando-os impossibilitados de baixar qualquer coisa da internet. Isso causará os seguintes impactos:
+
+1. **Falha ao baixar imagens de contêiner no ECR:** Os nós do Amazon ECS na sub-rede privada não conseguirão realizar o *pull* das imagens Docker registradas nos repositórios.
+
+2. **Impossibilidade de atualização de pacotes e SO:** A instância EC2 do PostgreSQL e os nós do ECS ficarão impossibilitados de efetuar atualizações de segurança do sistema operacional.
+
+3. **Perda de gerenciamento remoto via AWS Systems Manager (SSM):** A gestão remota realizada pelo AWS Systems Manager em direção às instâncias privadas será interrompida, pois o agente do SSM precisa de conexão de saída para comunicar com os *endpoints* da AWS.
 
 
 ## 5.6 Tecnologias
