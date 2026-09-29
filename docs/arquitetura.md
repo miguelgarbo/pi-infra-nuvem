@@ -4,26 +4,26 @@ Seções Contidas no Documento Atualmente:
 Faltam:
 5.5 e 5.7
 
-# 5 Descrição da Aplicação e Arquitetura
+# Descrição da Aplicação e Arquitetura
 
-## 5.1 Descrição e Problema Resolvido pela Aplicação
+## 5.1 Descrição da aplicação
 
 A aplicação é um sistema web para gerenciamento e reserva de aluguel de carros. Ela resolve a burocracia do controle manual de frotas e a falta de transparência no cálculo de valores, automatizando a gestão de veículos para a empresa e permitindo que os clientes calculem custos em tempo real, façam reservas online e acompanhem seu histórico de locações.
 
-## Perfis de Usuários
+### Perfis de Usuários
 O sistema possue dois tipos de usuários com permissões distintas:
 
 * **Administrador:** Responsável pela manutenção e alimentação do banco de dados. Possui privilégios de acesso para gerenciar a maioria das rotas administrativas do sistema.
 * **Locatário:** Cliente final que utiliza o sistema para visualizar o catálogo de veículos disponíveis, simular o valor final do aluguel de acordo com o período selecionado, efetivar a reserva e consultar seu histórico de locações.
 
-## Funcionalidades Principais
+### Funcionalidades Principais
 * **Gestão de Frota (Admin):** Cadastro, atualização e controle de status dos veículos disponíveis.
 * **Controle de Acesso:** Autenticação e autorização diferenciando as rotas de administrador e locatário.
 * **Simulação e Cálculo de Aluguel:** Ferramenta que calcula o valor total da reserva com base nas diárias/período escolhido pelo locatário.
 * **Aluguel de Carros:** Fluxo para o locatário confirmar o aluguel do veículo selecionado.
 * **Histórico de Locações:** Painel no qual o locatário acompanha suas reservas passadas e ativas.
 
-## Componentes Técnicos
+### Componentes Técnicos
 A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via API RESTful):
 
 * **Frontend:** Desenvolvido em **React** com o empacotador **Vite**, responsável por renderizar uma interface dinâmica, leve e responsiva no navegador do usuário (*Single Page Application*).
@@ -32,7 +32,7 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 
 ---
 
-## Requisitos Não-Funcionais Assumidos
+### Requisitos Não-Funcionais Assumidos
 
 * **RNF01 – Usuários Simultâneos:** O sistema foi dimensionado para suportar até **50 usuários simultâneos** em regime normal de operação (cenário compatível com uma empresa local de aluguel de carros de pequeno a médio porte).
 
