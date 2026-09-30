@@ -15,3 +15,11 @@ A estimativa de custos da arquitetura foi calculada utilizando a **AWS Pricing C
 
 ---
 
+### Análise dos Custos
+
+* **Item Mais Caro:** O componente de maior custo na arquitetura é o **VPC NAT Gateway** (~US$ 32,85/mês), seguido pelas duas instâncias de aplicação **`t3.medium`** (~US$ 30,37/mês cada).
+* **Proposta de Redução de Custo:** Para ambientes de desenvolvimento, o NAT Gateway gerenciado poderia ser substituído por uma instância EC2 rodando NAT (ex: `t3.micro`), reduzindo o custo fixo de rede de US$ 32,85 para US$ 7,59. No entanto, perde-se o gerenciamento automatizado, a largura de banda elástica e a alta disponibilidade nativa do serviço gerenciado da AWS.
+* **Nível Gratuito (AWS Free Tier):** A conta AWS que cntem a Infraestrutura esta logada em uma conta Free Tier. Possibilitando 100 Dolares em creditos.
+
+---
+
