@@ -23,3 +23,12 @@ A estimativa de custos da arquitetura foi calculada utilizando a **AWS Pricing C
 
 ---
 
+### Plano de Controle de Custos
+
+Para a gestão financeira do projeto, o grupo adotará as seguintes estratégias:
+
+1. **Automação via Infraestrutura como Código (IaC):** Todo o ambiente de rede e computação é provisionado utilizando **Terraform**.
+2. **Destruição do Ambiente:** A execução do comando `terraform destroy` será feita sempre que o ambiente não estiver sob uso ativo para interromper a cobrança por hora de computação e NAT Gateway.
+3. **Trade-off Custo vs. Esforço:** O grupo aceita o esforço adicional de re-executar os scripts de provisionamento e carga inicial da aplicação a cada nova sessão de uso, garantindo em troca que o custo acumulado fique muito abaixo do valor mensal contínuo.
+4. **Alerta de Orçamento (AWS Budgets):** Foi configurado um alerta no AWS Budgets para notificar o grupo via e-mail caso os gastos acumulados ultrapassem o limite de **US$ 15,00**.
+5. **Tagging de Recursos:** Todos os recursos criados via Terraform recebem tags padronizadas (ex: `Project: PI-Uniamerica`, `Environment: Test`, `ManagedBy: Terraform`) para facilitar o rastreamento no painel de faturamento da AWS.
