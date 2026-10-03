@@ -8,7 +8,7 @@ Este arquivo atende à seção 5.11 da Entrega 1. O uso de ferramentas de IA foi
 | Miguel Grigato Garbo | _[preencher]_ | Seções 5.1, 5.2, 5.3 e 5.4 | _[preencher]_ |
 | João Pedro Rodrigues de Lima | Claude (Anthropic), via Claude Code | README, este arquivo, organização do repositório e revisão de consistência entre as seções do documento | Conteúdo revisado pelo integrante; nomes de arquivos conferidos com a estrutura exigida no enunciado; inconsistências apontadas pela ferramenta repassadas aos responsáveis de cada seção |
 | Moroni de Melo | _[preencher]_ | Seção 5.9 | _[preencher]_ |
-| João Felini | _[preencher]_ | Seções 5.5, 5.8 e 5.10 | _[preencher]_ |
+| João Felini | Claude (Anthropic), via claude.ai | Seções 5.5, 5.8, 5.10 e formatação de texto para Markdown |Conteúdo revisado pelo integrante; nomes de arquivos conferidos com a estrutura exigida no enunciado;Inconsistências nas descrições e tabelas geradas pela ferramenta foram identificadas e corrigidas pelo integrante |
 
 ## Compromisso do grupo
 
