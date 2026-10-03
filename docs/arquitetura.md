@@ -91,6 +91,23 @@ Se a rota padrão (`0.0.0.0/0`) apontando para o NAT Gateway for removida da sub
 
 3. **Perda de gerenciamento remoto via AWS Systems Manager (SSM):** A gestão remota realizada pelo AWS Systems Manager em direção às instâncias privadas será interrompida, pois o agente do SSM precisa de conexão de saída para comunicar com os *endpoints* da AWS.
 
+## 5.5 Matriz de regras de segurança
+
+O acesso administrativo é feito exclusivamente pelo **AWS Systems Manager (Session Manager)**. O agente SSM, instalado nas instâncias, abre uma conexão de saída (HTTPS/443) até os endpoints da AWS, então nenhum grupo de segurança possui regra de entrada para SSH (porta 22). O SSH nunca é liberado para `0.0.0.0/0`.
+
+| Grupo de segurança | Direção | Protocolo | Porta | Origem/Destino | Justificativa |
+|---|---|---|---|---|---|
+| sg-nginx | Entrada | TCP | 443 | `0.0.0.0/0` | Fluxo 1: usuários acessam a aplicação via HTTPS. É o único ponto de entrada pública da arquitetura. |
+| sg-nginx | Saída | TCP | 80 | sg-frontend | Encaminha as rotas `/*` ao frontend. |
+| sg-nginx | Saída | TCP | 8080 | sg-backend | Encaminha as rotas `/api` ao backend. |
+| sg-nginx | Saída | TCP | 443 | `0.0.0.0/0` | O SSM Agent e as atualizações do SO acessam endpoints da AWS pelo Internet Gateway (a instância tem IP público). |
+| sg-frontend | Entrada | TCP | 80 | sg-nginx | Somente o proxy acessa o frontend. |
+| sg-frontend | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
+| sg-backend | Entrada | TCP | 8080 | sg-nginx | Somente o proxy chama a API. O frontend não acessa o backend diretamente. |
+| sg-backend | Saída | TCP | 5432 | sg-database | Conexão com o PostgreSQL. |
+| sg-backend | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
+| sg-database | Entrada | TCP | 5432 | sg-backend | O banco aceita conexões apenas do backend. |
+| sg-database | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Exclusivo para o SSM Agent e atualizações do SO. |
 
 ## 5.6 Tecnologias
 
