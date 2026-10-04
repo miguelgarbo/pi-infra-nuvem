@@ -9,7 +9,7 @@ Projeto Integrador — Uniamérica Descomplica — Prof. Gildomiro Bairros
 | Integrante | Responsabilidade |
 |---|---|
 | Kristhian dos Santos Magalhães | Infraestrutura: tecnologias, versões e dimensionamento (seções 5.6 e 5.7) |
-| Miguel Grigato Garbo | Arquitetura: diagrama, plano de endereçamento e tabelas de rota (seções 5.2, 5.3 e 5.4) |
+| Miguel Grigato Garbo | Arquitetura e Rede: diagrama, plano de endereçamento e tabelas de rota (seções 5.1, 5.2, 5.3 e 5.4) |
 | João Pedro Rodrigues de Lima | Documentação e entrega: IA.md, organização do repositório e apresentação (seção 5.11) |
 | Moroni de Melo | Custos: calculadora oficial e cenários de custo (seção 5.9) |
 | João Felini | Segurança: security groups, ADRs e riscos (seções 5.5, 5.8 e 5.10) |
@@ -36,7 +36,7 @@ Sistema web para gerenciamento de frota e reserva de aluguel de carros, com fron
 │   └── custos/
 │       ├── estimativa.md        # Detalhamento da estimativa
 │       └── estimativa.pdf       # Exportação da AWS Pricing Calculator
-└── infra/                       # Vazio nesta entrega; usado na Entrega 2 (Terraform)
+└── infra/                       # Vazio na entrega 1; usado na Entrega 2 (Terraform)
 ```
 
 ## Documentos
