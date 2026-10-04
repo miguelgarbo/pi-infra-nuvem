@@ -1,9 +1,3 @@
-Seções Contidas no Documento Atualmente:
-5.1, 5.3, 5.4, 5.6, 5.7, 5.9 e 5.10
-
-Faltam:
-5.5 e 5.7
-
 # Descrição da Aplicação e Arquitetura
 
 ## 5.1 Descrição da aplicação
