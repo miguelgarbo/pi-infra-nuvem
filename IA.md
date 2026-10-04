@@ -5,7 +5,7 @@ Este arquivo atende à seção 5.11 da Entrega 1. O uso de ferramentas de IA foi
 | Integrante | Ferramenta(s) | Parte do trabalho | O que foi verificado ou corrigido |
 |---|---|---|---|
 | Kristhian dos Santos Magalhães | Claude (Anthropic), via Claude Code | Seções 5.6 e 5.7 | Conteúdo revisado pelo integrante; famílias e tipos de instância (t3.micro, t3.medium) conferidos na documentação oficial da AWS; valores de memória, armazenamento e a separação dos hosts de frontend e backend foram ajustados pelos integrantes após validação, assim como a troca do Docker Hub pelo Amazon ECR como registro de imagens |
-| Miguel Grigato Garbo | _[preencher]_ | Seções 5.1, 5.2, 5.3 e 5.4 | _[preencher]_ |
+| Miguel Grigato Garbo | Chatgpt Web | Seções 5.1, 5.2, 5.3 e 5.4 | Foi usado para ajudar a desenvolver a gramática das Seções e para ideias de uma infraestrutura barata para o projeto acadêmico |
 | João Pedro Rodrigues de Lima | Claude (Anthropic), via Claude Code | README, este arquivo, organização do repositório e revisão de consistência entre as seções do documento | Conteúdo revisado pelo integrante; nomes de arquivos conferidos com a estrutura exigida no enunciado; inconsistências apontadas pela ferramenta repassadas aos responsáveis de cada seção |
 | Moroni de Melo | _[preencher]_ | Seção 5.9 | _[preencher]_ |
 | João Felini | Claude (Anthropic), via claude.ai | Seções 5.5, 5.8, 5.10 e formatação de texto para Markdown |Conteúdo revisado pelo integrante; nomes de arquivos conferidos com a estrutura exigida no enunciado;Inconsistências nas descrições e tabelas geradas pela ferramenta foram identificadas e corrigidas pelo integrante |

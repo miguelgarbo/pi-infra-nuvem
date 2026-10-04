@@ -28,7 +28,7 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 
 ### Requisitos Não-Funcionais Assumidos
 
-* **RNF01 – Usuários Simultâneos:** O sistema foi dimensionado para suportar até **50 usuários simultâneos** em regime normal de operação (cenário compatível com uma empresa local de aluguel de carros de pequeno a médio porte).
+* **RNF01 – Usuários Simultâneos:** O sistema vai dimensionado para suportar até **50 usuários simultâneos** em regime normal de operação (cenário compatível com uma empresa local de aluguel de carros de pequeno a médio porte).
 
 * **RNF02 – Disponibilidade Esperada:** O sistema almeja um nível de disponibilidade estimado em **99,0%** em ambiente de execução regular. **Análise de Alta Disponibilidade (HA)**: A arquitetura proposta adota redundância na camada de aplicação, prevendo a execução de 2 instâncias (tasks) para o frontend e 2 instâncias (tasks) para o backend gerenciadas via Amazon ECS, com um servidor NGINX atuando como reverse proxy e distribuidor de tráfego na subnet pública.
 
@@ -61,7 +61,7 @@ permite que instâncias como o proxy NGINX tenham conectividade bidirecional dir
 | Destino | Alvo (*Target*) | Descrição / Finalidade |
 | :--- | :--- | :--- |
 | `10.50.0.0/24` | `local` | Roteamento interno entre todos os recursos pertencentes à VPC |
-| `0.0.0.0/0` | `Internet Gateway` (`igw-...`) | Encaminha todo o tráfego destinado à internet pública através do Internet Gateway |
+| `0.0.0.0/0` | `Internet Gateway` | Encaminha todo o tráfego destinado à internet pública através do Internet Gateway |
 
 ---
 
@@ -71,7 +71,7 @@ Esta tabela está associada à sub-rede privada `10.50.0.16/28` (`pv-subnet`), o
 | Destino | Alvo (*Target*) | Descrição / Finalidade |
 | :--- | :--- | :--- |
 | `10.50.0.0/24` | `local` | Roteamento interno entre os componentes privados e públicos da VPC. |
-| `0.0.0.0/0` | `NAT Gateway` (`nat-...`) | Permite que as instâncias privadas iniciem conexões de saída para a internet através do NAT Gateway. |
+| `0.0.0.0/0` | `NAT Gateway` | Permite que as instâncias privadas iniciem conexões de saída para a internet através do NAT Gateway. |
 
 ---
 
@@ -107,30 +107,30 @@ O acesso administrativo é feito exclusivamente pelo **AWS Systems Manager (Sess
 
 | Camada | Tecnologia | Versão | Justificativa |
 |---|---|---|---|
-| Provedor e região | AWS — us-east-2 (Ohio) | - | Região com custo de instâncias EC2 e de NAT Gateway cerca de 30-40% menor que sa-east-1 (São Paulo). A carga prevista (1 usuário simultâneo, seção 5.1) não exige baixa latência garantida nem alta disponibilidade nesta entrega, então a latência adicional de ~150-180ms entre o Brasil e Ohio foi aceita conscientemente em troca do menor custo mensal. A região oferece todos os serviços exigidos pela Entrega 2 (VPC, sub-redes, NAT Gateway, Elastic IP, Security Groups, Systems Manager) com disponibilidade equivalente à de sa-east-1. |
+| Provedor e região | AWS — us-east-2 (Ohio) | - | Região escolhida por apresentar o menor custo de infraestrutura da AWS. O valor de recursos como instâncias EC2 e NAT Gateway em Ohio (us-east-2) garante a menor tarifação mensal possível, otimizando o orçamento do projeto acadêmico. Como o ambiente destina-se a uma entrega/demonstração acadêmica e a carga prevista é reduzida (50 usuários simultâneos), o acréscimo de latência entre o Brasil e os EUA foi aceito conscientemente como um trade-off viável, priorizando a economia de custos acima da resposta em milissegundos sem comprometer o funcionamento da aplicação |
 | Sistema operacional | Amazon Linux 2023 (AMI ECS-Optimized) | 2023 | Imagem mantida pela AWS, já com Docker Engine e o agente do ECS pré-instalados e atualizados, dispensando provisionamento manual (cloud-init) no host que roda os containers. Inclui o SSM Agent nativamente, necessário para o acesso administrativo via Systems Manager sem bastion. |
-| Orquestração de containers | Amazon ECS — launch type EC2 | - | O ECS permite declarar task definitions que apontam direto para as imagens de frontend e backend, sem etapa de build na infraestrutura. O launch type EC2 foi escolhido no lugar do Fargate para manter controle sobre o dimensionamento e o custo da instância hospedeira, em vez do modelo de cobrança por vCPU/memória do Fargate. Frontend e backend rodam em hosts ECS separados (ver seção 5.7), isolando o consumo de recursos de cada camada. |
-| Registro de imagens | Amazon ECR (Elastic Container Registry) | - | Repositório privado gerenciado pela AWS para as imagens de frontend e backend, no lugar do Docker Hub. Mantém o pull de imagens dentro da rede da AWS (sem depender de um registro externo nem passar pelo NAT/internet) e integra-se nativamente com as permissões IAM das instâncias ECS. |
-| Runtime / linguagem (backend) | Java 21 / Spring Boot | 21 / 3.3.x | Stack em que a aplicação do grupo já foi desenvolvida e containerizada; reaproveitar a imagem existente (publicada no ECR) evita reescrever a aplicação em outra linguagem só para a infraestrutura. |
-| Runtime / linguagem (frontend) | React | build estático já publicado como imagem Docker | Mesma justificativa do backend: aplicação já existente e containerizada, servida como build estático atrás do Nginx. |
+| Orquestração de containers | Amazon ECS — launch type EC2 | - | O ECS permite declarar task definitions que apontam direto para as imagens de frontend e backend, sem etapa de build na infraestrutura. O launch type EC2 foi escolhido no lugar do Fargate para manter controle sobre o dimensionamento e o custo da instância hospedeira, em vez do modelo de cobrança por vCPU/memória do Fargate. Frontend e backend rodam em hosts ECS separados, isolando o consumo de recursos de cada camada. |
+| Registro de imagens | Amazon ECR (Elastic Container Registry) | - | Repositório privado gerenciado pela AWS para as imagens de frontend e backend. Mantém o pull de imagens dentro da rede da AWS (sem depender de um registro externo nem passar pelo NAT/internet) e integra-se nativamente com as permissões IAM das instâncias ECS. |
+| Runtime / backend | Java / Spring Boot | 24 | API de regras de negócio, containerizada e isolada em sub-rede privada. O reuso da imagem pré-compilada no Amazon ECR evitou a reescrita do código, garantindo a integração com o PostgreSQL e acelerando o deploy|
+| Runtime / frontend | React | 19.2.8 | Aplicação SPA em React compilada como build estático (HTML/JS/CSS) e servida diretamente pelo Nginx. Essa abordagem elimina a necessidade de um servidor Node.js em produção, economizando memória e CPU da instância EC2. Como a imagem Docker já estava pronta no ECR, seu reuso otimizou o tempo de deploy |
 | Servidor web / proxy | Nginx | 1.26 | Único ponto de entrada público da arquitetura: encaminha `/` para o frontend e `/api` para o backend, ambos em sub-rede privada, e concentra o Elastic IP, evitando expor as instâncias de aplicação diretamente à internet. |
 | Banco de dados | PostgreSQL | 16 | Banco relacional self-managed em EC2 (ver ADR-003), compatível com o driver JDBC já usado pelo backend Spring Boot. |
 | Infraestrutura como código | Terraform | ~> 1.9 | Ferramenta padrão de mercado com provider oficial maduro para AWS; escolhida no lugar do OpenTofu por familiaridade do grupo. |
 | Provider do Terraform | hashicorp/aws | ~> 5.0 | Provider oficial da HashiCorp, com suporte completo aos recursos exigidos (VPC, sub-redes, NAT Gateway, Security Groups, EC2, Elastic IP). |
-| Instalação da aplicação | ECS task definitions (pull direto do Amazon ECR) | - | Como as imagens de frontend e backend já estão publicadas no ECR, a instalação não exige script de build nem Ansible: o ECS Agent apenas puxa a imagem do registro privado e sobe o container conforme a task definition, o que também simplifica recriar o ambiente entre sessões de teste (seção 5.9). |
+| Instalação da aplicação | ECS task definitions (pull direto do Amazon ECR) | - | Como as imagens de frontend e backend já estão publicadas no ECR, a instalação não exige script de build nem Ansible: o ECS Agent apenas puxa a imagem do registro privado e sobe o container conforme a task definition, o que também simplifica recriar o ambiente entre sessões de teste |
 
 ## 5.7 Dimensionamento das instâncias
 
-O requisito não funcional definido pelo grupo (seção 5.1) é de **1 usuário simultâneo**, sem exigência de alta disponibilidade nesta entrega. Por isso o dimensionamento abaixo prioriza o menor custo mensal compatível com a carga, e não throughput ou concorrência.
+O requisito não funcional desta entrega é suportar 50 usuários simultâneos sem exigência estrita de alta disponibilidade, priorizando o menor custo mensal.
 
-Todas as instâncias usam a família **t3** (CPU baseada em créditos), adequada a uma carga majoritariamente ociosa com picos curtos por requisição — típica de 1 usuário simultâneo.
+Para isso, todas as instâncias usam a família t3 (CPU baseada em créditos). Essa arquitetura é ideal para o projeto: as instâncias acumulam créditos computacionais durante a ociosidade e os utilizam para entregar picos de CPU (burstable performance) nos momentos de tráfego. Isso garante fluidez e estabilidade para os 50 usuários com um custo muito inferior ao de instâncias de capacidade fixa.
 
 | Componente | Família | Tipo | vCPU | Memória | Disco (tipo e tamanho) | Sub-rede | Justificativa |
 |---|---|---|---|---|---|---|---|
-| Nginx (proxy público) | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 4 GiB | Pública (com Elastic IP) | Função de proxy reverso puro, sem lógica de aplicação: para 1 usuário simultâneo o consumo de CPU é esporádico. O t3.nano foi descartado por oferecer apenas 512 MiB de memória, insuficiente para sustentar conexões keep-alive e buffers de proxy com folga. Quando os créditos de CPU se esgotam, a instância não é interrompida — apenas tem seu desempenho reduzido ao baseline garantido do t3.micro (~10% de 1 vCPU), o que é aceitável porque a carga prevista dificilmente sustenta uso de CPU acima do baseline por tempo suficiente para esgotar o saldo de créditos. |
-| Host ECS — Frontend (2 tasks) | t3 (CPU baseada em créditos) | t3.medium | 2 | 4 GiB | gp3, 4 GiB | Privada | VM dedicada às 2 réplicas do frontend (build estático), isolada da VM de backend para que picos de CPU/memória de uma camada não afetem a outra. O consumo do frontend estático é leve, mas o grupo optou por t3.medium (4 GiB) para manter folga confortável de memória, incluindo overhead do ECS Agent e do sistema operacional. Sob esgotamento de créditos de CPU, a instância cai para o desempenho baseline do t3.medium (~20% de 1 vCPU), impacto baixo dado o perfil leve do frontend estático. |
-| Host ECS — Backend (2 tasks) | t3 (CPU baseada em créditos) | t3.medium | 2 | 4 GiB | gp3, 4 GiB | Privada | VM dedicada às 2 réplicas do backend Spring Boot; cada instância da JVM reserva tipicamente 512 MiB–1 GiB de heap, totalizando ~1-2 GiB para os dois containers, com folga no t3.medium para o overhead do ECS Agent e do sistema operacional. O t3.small (2 GiB) foi descartado por deixar a instância sujeita a OOM kill de containers em picos simultâneos das réplicas de backend. Sob esgotamento de créditos de CPU, o host cai para o desempenho baseline do t3.medium (~20% de 1 vCPU), podendo aumentar a latência de resposta, mas sem derrubar os containers — risco aceitável dado o único usuário simultâneo previsto. |
-| PostgreSQL | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 8 GiB | Privada | Atende a 1 usuário simultâneo com volume de dados pequeno (cadastro e listagem de registros); 1 GiB é suficiente para o shared_buffers e cache do PostgreSQL 16 nesse volume. O t3.small foi descartado por dobrar o custo mensal sem ganho perceptível para essa carga. Se os créditos de CPU se esgotarem, as consultas passam a rodar no desempenho baseline do t3.micro, aumentando a latência de consultas mais pesadas, mas sem indisponibilidade (risco também listado na seção 5.10). O disco (8 GiB) foi dimensionado com folga em relação ao volume de dados esperado para acomodar o crescimento do banco sem exigir redimensionamento manual durante a Entrega 2. |
+| Nginx (proxy público) | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 4 GiB | Pública (com Elastic IP) | Atua exclusivamente como proxy reverso. A instância garante a memória (1 GiB) necessária para gerenciar conexões concorrentes e buffers do Nginx com estabilidade para a carga de 50 usuários, aproveitando os picos de CPU (burstable) quando há aumento súbito de tráfego. |
+| Host ECS — Frontend (2 tasks) | t3 (CPU baseada em créditos) | t3.medium | 2 | 4 GiB | gp3, 4 GiB | Privada | Hospeda as duas réplicas do frontend, mantendo esta camada isolada do processamento de negócio. A capacidade de 4 GiB fornece um ambiente com ampla folga de memória para o sistema operacional, ECS Agent e a execução dos containers, prevenindo qualquer concorrência de recursos. |
+| Host ECS — Backend (2 tasks) | t3 (CPU baseada em créditos) | t3.medium | 2 | 4 GiB | gp3, 4 GiB | Privada | Dedicada às duas réplicas da API em Spring Boot. Por ser baseada em Java, cada container exige uma reserva de memória considerável. Os 4 GiB garantem a operação segura de ambos os containers simultaneamente, sem risco de queda por falta de memória, deixando margem para o SO. |
+| PostgreSQL | t3 (CPU baseada em créditos) | t3.micro | 2 | 1 GiB | gp3, 8 GiB | Privada | Configuração ideal para o volume de dados do escopo acadêmico. A memória atende eficientemente ao cache e aos shared buffers do banco para a carga estimada, enquanto o disco gp3 de 8 GiB oferece espaço abundante e seguro para o armazenamento, mantendo o ambiente otimizado e com baixo custo mensal. |
 
 ## 5.10 Riscos e limitações
 
