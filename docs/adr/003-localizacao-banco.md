@@ -1,5 +1,4 @@
 # ADR-003: Localização do Banco de Dados
-# ADR-003: Localização do banco de dados
 
 No contexto de uma aplicação de aluguel de carros cujo backend Spring Boot persiste usuários, veículos e locações em um banco relacional, com carga estimada baixa e orçamento pago pelo próprio grupo,
 diante da necessidade de definir se o PostgreSQL ficará em uma instância própria na sub-rede privada ou em um serviço gerenciado,
