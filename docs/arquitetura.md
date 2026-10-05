@@ -42,6 +42,20 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 
 
 
+## 5.2 Diagrama de arquitetura
+
+[`diagramas\diagrama_arquitetura_cloud_pi.png`](diagramas\diagrama_arquitetura_cloud_pi.drawio.png) (imagem)
+
+Fonte editável: [`diagramas\diagrama_arquitetura_cloud_pi.drawio`](diagramas\diagrama_arquitetura_cloud_pi.drawio) (drawio).
+
+O diagrama representa a AWS na região `us-east-2` (Ohio), com a VPC `vpc-pi-infra` (`10.50.0.0/24`), a sub-rede pública `pb-subnet` (`10.50.0.0/28`) e a sub-rede privada `pv-subnet` (`10.50.0.16/28`). Cada instância aparece com seu tipo, e o grupo de segurança aplicado. A única instância com IP público (Elastic IP) é a do Nginx.
+
+### Fluxos numerados
+
+1. **Fluxo 1 — Usuário final acessando a aplicação:** o navegador do usuário envia uma requisição HTTPS (TCP 443) para o Elastic IP do Nginx, passando pelo Internet Gateway. O Nginx (`sg-nginx`, sub-rede pública) encaminha as rotas `/*` para o ECS Service do frontend (TCP 80, `sg-frontend`) e as rotas `/api` para o ECS Service do backend (TCP 8080, `sg-backend`), ambos na sub-rede privada. O backend consulta o PostgreSQL (TCP 5432, `sg-database`), e a resposta volta pelo mesmo caminho.
+2. **Fluxo 2 — Administrador acessando via SSH:** o administrador se autentica na AWS (IAM) e abre uma sessão no AWS Systems Manager Session Manager por HTTPS/TLS. O SSM Agent de cada instância mantém uma conexão de saída (TCP 443) com os endpoints da AWS, pelo Internet Gateway no caso do Nginx e pelo NAT Gateway no caso das instâncias privadas. O SSH é feito por um túnel sobre essa sessão (`ssh` com `ProxyCommand` do SSM), sem nenhuma porta 22 aberta nos grupos de segurança (ver ADR-001).
+3. **Fluxo 3 — Instância privada acessando a internet pelo NAT:** os hosts ECS e a instância do PostgreSQL, sem IP público, enviam o tráfego destinado à internet (pull de imagens no Amazon ECR, atualizações do sistema operacional, comunicação do SSM Agent) para o NAT Gateway na sub-rede pública, conforme a rota `0.0.0.0/0` da `pv-subnet-rt`. O NAT Gateway traduz o endereço de origem para o seu IP público e encaminha o tráfego ao Internet Gateway. As respostas retornam pelo mesmo caminho, e nenhuma conexão iniciada na internet consegue alcançar as instâncias privadas.
+
 ## 5.3 Tabela de Plano de Enderaçamento IP
 
 | Recurso | Nome | CIDR | Faixa de IP | Zona | Tipo | Finalidade |
@@ -49,6 +63,21 @@ A aplicação adota uma arquitetura em camadas desacoplada (cliente-servidor via
 | **VPC - Rede Virtual Privada** | `vpc-pi-infra` | `10.50.0.0/24` | `10.50.0.0 -> 10.50.0.255` | `us-east-2` | - | Rede Privada do Projeto |
 | **Sub-rede da VPC** | `pb-subnet` | `10.50.0.0/28` | `10.50.0.0 -> 10.50.0.15` | `us-east-2a` | Pública | Proxy Reverso e Load Balancer |
 | **Sub-rede da VPC** | `pv-subnet` | `10.50.0.16/28` | `10.50.0.16 -> 10.50.0.31` | `us-east-2a` | Privada | Frontend, Backend, Banco de dados |
+
+
+### Justificativa dos tamanhos e endereços reservados
+
+A AWS reserva **5 endereços em cada sub-rede**: o endereço de rede, o roteador da VPC (`.1`), o DNS da AWS (`.2`), um endereço reservado para uso futuro (`.3`) e o endereço de broadcast (último). Assim, cada sub-rede `/28` (16 endereços) tem **11 endereços utilizáveis**, foi escolhido essa máscara de subrede por diminuição de custos, assim evitando ips inutéis, usando apenas o necessário.
+
+| Sub-rede | Endereços reservados pela AWS | Utilizáveis | Em uso no projeto |
+|---|---|---|---|
+| `pb-subnet` (`10.50.0.0/28`) | `.0`, `.1`, `.2`, `.3`, `.15` | `.4` a `.14` (11) | Nginx (`10.50.0.5`) e NAT Gateway: 2 endereços |
+| `pv-subnet` (`10.50.0.16/28`) | `.16`, `.17`, `.18`, `.19`, `.31` | `.20` a `.30` (11) | Host ECS frontend (`.20`), host ECS backend (`.21`) e PostgreSQL (`.22`): 3 endereços |
+
+- **Sub-redes `/28`:** é o menor bloco aceito pela AWS. Cada sub-rede terá no máximo 3 recursos, e os 11 endereços utilizáveis deixam folga para recriar instâncias e acrescentar componentes sem desperdiçar faixa.
+- **VPC `/24`:** com 256 endereços, comporta 16 sub-redes `/28`. Hoje só 2 são usadas, o que deixa espaço para as sub-redes de uma segunda zona de disponibilidade na proposta de alta disponibilidade da Entrega 2, sem precisar recriar a VPC.
+- **Faixa `10.50.0.0`:** faixa privada (RFC 1918), sem sobreposição entre as sub-redes.
+
 
 
 ## 5.4 Tabelas de Roteamento
