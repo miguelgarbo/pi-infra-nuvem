@@ -44,9 +44,7 @@ server {
     resolver 10.20.0.2 valid=10s ipv6=off;
     resolver_timeout 5s;
 
-    # -----------------------------
     # BACKEND
-    # -----------------------------
     location /api/ {
         set $backend backend.miguel-aluguel.internal:8080;
 
@@ -58,9 +56,7 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # -----------------------------
     # FRONTEND
-    # -----------------------------
     location / {
         set $frontend frontend.miguel-aluguel.internal:80;
 
@@ -73,8 +69,6 @@ server {
     }
 }
 
-NGINX
-
 # Valida a configuração
 nginx -t
 
@@ -84,10 +78,8 @@ systemctl restart nginx
 
 EOF
 
-  tags = merge(
-    local.common_tags,
-    {
+  tags = {
       Name = "ec2-nginx-pi"
     }
-  )
+  
 }

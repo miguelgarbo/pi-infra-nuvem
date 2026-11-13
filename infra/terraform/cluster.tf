@@ -97,7 +97,7 @@ resource "aws_ecs_task_definition" "backend_task" {
   container_definitions = jsonencode([
     {
       name      = "miguel_aluguel_backend_official"
-      image     = "${aws_ecr_repository.ecr_backend.repository_url}:v.cors.free"
+      image     = var.ecr_backend
       essential = true
 
       portMappings = [
@@ -119,19 +119,19 @@ resource "aws_ecs_task_definition" "backend_task" {
       environment = [
         {
           name  = "DB_URL"
-          value = "jdbc:postgresql://${aws_db_instance.postgres_rds.endpoint}/miguel_aluguel"
+          value = var.DB_URL
         },
         {
           name  = "DB_USERNAME"
-          value = "postgres"
+          value = var.DB_USERNAME
         },
         {
           name  = "DB_PASSWORD"
-          value = "postgres"
+          value = var.DB_PASSWORD
         },
         {
           name  = "HASH_TOKEN"
-          value = "ch7ZyBOjWpLhyjmpmJWJlF3fEfNR5bW2aFYwqADEJksenvVr3MJMPWaWMk1UaaTjnJExf8EnCd2NxWyVf8TWbA"
+          value = var.HASH_TOKEN
         },
         {
           name  = "FRONT_URL"
@@ -187,7 +187,7 @@ resource "aws_ecs_task_definition" "frontend_task" {
   container_definitions = jsonencode([
     {
       name      = "miguel_aluguel_frontend"
-      image     = "${aws_ecr_repository.ecr_frontend.repository_url}:v.8"
+      image     = var.ecr_frontend
       essential = true
       portMappings = [
         {

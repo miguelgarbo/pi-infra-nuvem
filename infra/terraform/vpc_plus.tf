@@ -6,12 +6,10 @@ resource "aws_vpc" "vpc_miguel_aluguel" {
   enable_dns_support   = true
   enable_dns_hostnames = true
 
-  tags = merge(
-    local.common_tags,
-    {
+  tags = {
       Name = "vpc_miguel_aluguel"
     }
-  )
+  
 }
 
 # Subnet pública para o Nginx / ALB
@@ -21,12 +19,10 @@ resource "aws_subnet" "subnet-pub-1" {
   cidr_block              = "10.20.0.0/24"
   map_public_ip_on_launch = true
 
-  tags = merge(
-    local.common_tags,
-    {
+  tags = {
       Name = "subnet-pub-1"
     }
-  )
+  
 }
 
 resource "aws_subnet" "subnet-priv-1" {
