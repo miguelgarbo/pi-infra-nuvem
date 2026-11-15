@@ -13,4 +13,12 @@ terraform {
 # aqui é inicializado a variavel que foi criada no arquivo variables.tf
 provider "aws" {
   region = var.aws_region
+
+  default_tags {
+    tags = {
+      project = "miguel-aluguel"
+      group   = "pi-02-2026"
+      managed = "terraform"
+    }
+  }
 }

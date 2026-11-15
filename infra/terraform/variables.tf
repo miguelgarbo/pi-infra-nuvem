@@ -36,7 +36,3 @@ variable "DB_PASSWORD" {
   type = string
 }
 
-variable "DB_URL" {
-  description = "URL do Banco RDS"
-  type = string
-  }

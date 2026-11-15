@@ -119,7 +119,7 @@ resource "aws_ecs_task_definition" "backend_task" {
       environment = [
         {
           name  = "DB_URL"
-          value = var.DB_URL
+          value =  "jdbc:postgresql://${aws_db_instance.postgres_rds.endpoint}/${var.DB_NAME}"
         },
         {
           name  = "DB_USERNAME"
@@ -150,7 +150,7 @@ resource "aws_ecs_service" "backend_service" {
   cluster         = aws_ecs_cluster.pi_cluster.id
   task_definition = aws_ecs_task_definition.backend_task.arn
 
-  desired_count = 1
+  desired_count = 2
   launch_type   = "FARGATE"
 
   network_configuration {
@@ -159,7 +159,6 @@ resource "aws_ecs_service" "backend_service" {
       aws_subnet.subnet-priv-2.id
     ])
     security_groups  = [aws_security_group.back-pi.id]
-    assign_public_ip = true
   }
 
   service_registries {
@@ -218,7 +217,7 @@ resource "aws_ecs_service" "frontend_service" {
   cluster         = aws_ecs_cluster.pi_cluster.id
   task_definition = aws_ecs_task_definition.frontend_task.arn
 
-  desired_count = 1
+  desired_count = 2
   launch_type   = "FARGATE"
 
   network_configuration {
@@ -227,7 +226,6 @@ resource "aws_ecs_service" "frontend_service" {
       aws_subnet.subnet-priv-2.id
     ])
     security_groups  = [aws_security_group.front-pi.id]
-    assign_public_ip = true
   }
 
   service_registries {

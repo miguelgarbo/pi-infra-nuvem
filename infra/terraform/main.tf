@@ -18,7 +18,7 @@ resource "aws_instance" "ec2-nginx-pi" {
 
   vpc_security_group_ids = [
     aws_security_group.ssh.id,
-    aws_security_group.nginx_access.id
+    aws_security_group.app_access.id
   ]
 
   user_data = <<-EOF

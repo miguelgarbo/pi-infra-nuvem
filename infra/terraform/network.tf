@@ -78,7 +78,7 @@ resource "aws_eip" "nat_eip" {
 # criar o NAT para liberar acesso a internet para a subnet privada 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.subnet-pub-1.id # <--- O NAT fica na subnet pública, não usa vpc_id direto
+  subnet_id     = aws_subnet.subnet-pub-1.id 
 
   tags = {
     Name = "natzao-miguel-aluguel"
@@ -154,7 +154,7 @@ resource "aws_security_group" "ssh" {
   }
 }
 
-resource "aws_security_group" "nginx_access" {
+resource "aws_security_group" "app_access" {
   name        = "nginx-access"
   description = "Permite acesso a aplicacao"
   vpc_id      = aws_vpc.vpc_miguel_aluguel.id
@@ -195,7 +195,7 @@ resource "aws_security_group" "front-pi" {
     from_port       = 80
     to_port         = 80
     protocol        = "tcp"
-    security_groups = [aws_security_group.nginx_access.id]
+    security_groups = [aws_security_group.app_access.id]
   }
 
   egress {
@@ -217,7 +217,7 @@ resource "aws_security_group" "back-pi" {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    security_groups = [aws_security_group.nginx_access.id]
+    security_groups = [aws_security_group.app_access.id]
   }
 
   egress {
