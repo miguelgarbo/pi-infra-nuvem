@@ -46,3 +46,5 @@ Sistema web para gerenciamento de frota e reserva de aluguel de carros, com fron
 - [Diagrama de arquitetura](docs/diagramas/arquitetura.png) ([fonte editável](docs/diagramas/arquitetura.drawio))
 - [Estimativa de custos](docs/custos/estimativa.md) ([PDF da calculadora](docs/custos/estimativa.pdf))
 - [Declaração de uso de IA](IA.md)
+
+

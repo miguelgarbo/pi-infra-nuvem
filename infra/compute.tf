@@ -1,29 +1,104 @@
+# EC2 NGINX (PROXY REVERSO)
 
-# CLUSTER
-resource "aws_ecs_cluster" "pi_cluster" {
-  name = "miguel-aluguel-cluster"
-}
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
 
-data "aws_iam_policy_document" "ecs_task_assume_role" {
-  statement {
-    actions = ["sts:AssumeRole"]
-
-    principals {
-      type        = "Service"
-      identifiers = ["ecs-tasks.amazonaws.com"]
-    }
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 }
 
-resource "aws_iam_role" "ecs_task_execution_role" {
-  name               = "miguel-ecs-task-execution-role"
-  assume_role_policy = data.aws_iam_policy_document.ecs_task_assume_role.json
+# Instância pública para o Nginx
+resource "aws_instance" "ec2-nginx-pi" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t3.micro"
+  subnet_id     = aws_subnet.subnet-pub-1.id
+
+  associate_public_ip_address = true
+
+  vpc_security_group_ids = [
+    aws_security_group.app_access.id
+  ]
+  user_data_replace_on_change = true
+
+  iam_instance_profile = aws_iam_instance_profile.ssm_nginx.name
+
+  user_data                   = <<-EOF
+    #!/bin/bash
+    set -euxo pipefail
+
+    # Atualiza os pacotes
+    apt-get update -y
+
+    # Instala Nginx e ferramentas de diagnóstico
+    DEBIAN_FRONTEND=noninteractive apt-get install -y nginx dnsutils curl
+
+    # Configuração do Nginx
+    cat > /etc/nginx/sites-available/default <<'NGINX'
+
+    server {
+        listen 80 default_server;
+        listen [::]:80 default_server;
+
+        server_name _;
+
+        # DNS privado da VPC AWS
+        resolver 10.20.0.2 valid=10s ipv6=off;
+        resolver_timeout 5s;
+
+        # -----------------------------
+        # BACKEND
+        # -----------------------------
+        location /api/ {
+            set $backend backend.miguel-aluguel.internal:8080;
+
+            proxy_pass http://$backend;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # -----------------------------
+        # FRONTEND
+        # -----------------------------
+        location / {
+            set $frontend frontend.miguel-aluguel.internal:80;
+
+            proxy_pass http://$frontend;
+
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+
+    NGINX
+
+    # Valida a configuração
+    nginx -t
+
+    # Habilita e inicia o serviço
+    systemctl enable nginx
+    systemctl restart nginx
+
+EOF
+
+  tags = {
+    Name = "ec2-nginx-pi"
+  }
+
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
-  role = aws_iam_role.ecs_task_execution_role.name
 
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+# CLUSTER ECS + FARGATE
+resource "aws_ecs_cluster" "pi_cluster" {
+  name = "miguel-aluguel-cluster"
 }
 
 
@@ -39,46 +114,6 @@ resource "aws_cloudwatch_log_group" "frontend_logs" {
   retention_in_days = 14
 }
 
-#criação de dns privado para suporte de troca de ips dos ecs
-
-resource "aws_service_discovery_private_dns_namespace" "internal" {
-  name        = "miguel-aluguel.internal"
-  description = "DNS interno dos serviços ECS"
-  vpc         = aws_vpc.vpc_miguel_aluguel.id
-}
-
-#registros dos "target groups", ta fazendo o mesmo papel 
-
-resource "aws_service_discovery_service" "backend" {
-  name = "backend"
-
-  dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.internal.id
-    routing_policy = "MULTIVALUE"
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-  }
-}
-
-resource "aws_service_discovery_service" "frontend" {
-  name = "frontend"
-
-  dns_config {
-    namespace_id   = aws_service_discovery_private_dns_namespace.internal.id
-    routing_policy = "MULTIVALUE"
-
-    dns_records {
-      ttl  = 10
-      type = "A"
-    }
-  }
-}
-# caso de uso
-#backend.miguel-aluguel.internal
-#frontend.miguel-aluguel.internal
 
 
 # --- TASK DEFINITION: BACKEND ---
@@ -119,7 +154,7 @@ resource "aws_ecs_task_definition" "backend_task" {
       environment = [
         {
           name  = "DB_URL"
-          value =  "jdbc:postgresql://${aws_db_instance.postgres_rds.endpoint}/${var.DB_NAME}"
+          value = "jdbc:postgresql://${aws_db_instance.postgres_rds.endpoint}/${var.DB_NAME}"
         },
         {
           name  = "DB_USERNAME"
@@ -158,7 +193,7 @@ resource "aws_ecs_service" "backend_service" {
       aws_subnet.subnet-priv-1.id,
       aws_subnet.subnet-priv-2.id
     ])
-    security_groups  = [aws_security_group.back-pi.id]
+    security_groups = [aws_security_group.back-pi.id]
   }
 
   service_registries {
@@ -225,7 +260,7 @@ resource "aws_ecs_service" "frontend_service" {
       aws_subnet.subnet-priv-1.id,
       aws_subnet.subnet-priv-2.id
     ])
-    security_groups  = [aws_security_group.front-pi.id]
+    security_groups = [aws_security_group.front-pi.id]
   }
 
   service_registries {
