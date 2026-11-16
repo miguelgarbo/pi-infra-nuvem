@@ -79,7 +79,7 @@ systemctl restart nginx
 EOF
 
   tags = {
-      Name = "ec2-nginx-pi"
-    }
-  
+    Name = "ec2-nginx-pi"
+  }
+
 }
