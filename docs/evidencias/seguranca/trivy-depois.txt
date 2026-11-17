@@ -1,0 +1,280 @@
+
+Report Summary
+
+┌─────────────┬───────────┬───────────────────┐
+│   Target    │   Type    │ Misconfigurations │
+├─────────────┼───────────┼───────────────────┤
+│ .           │ terraform │         0         │
+├─────────────┼───────────┼───────────────────┤
+│ compute.tf  │ terraform │         3         │
+├─────────────┼───────────┼───────────────────┤
+│ database.tf │ terraform │         4         │
+├─────────────┼───────────┼───────────────────┤
+│ network.tf  │ terraform │         1         │
+├─────────────┼───────────┼───────────────────┤
+│ security.tf │ terraform │         4         │
+└─────────────┴───────────┴───────────────────┘
+Legend:
+- '-': Not scanned
+- '0': Clean (no security findings detected)
+
+
+compute.tf (terraform)
+======================
+Tests: 3 (SUCCESSES: 0, FAILURES: 3)
+Failures: 3 (UNKNOWN: 0, LOW: 3, MEDIUM: 0, HIGH: 0, CRITICAL: 0)
+
+AWS-0017 (LOW): Log group is not encrypted.
+════════════════════════════════════════
+CloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.
+
+
+See https://avd.aquasec.com/misconfig/aws-0017
+────────────────────────────────────────
+ compute.tf:126-129
+────────────────────────────────────────
+ 126 ┌ resource "aws_cloudwatch_log_group" "backend_logs" {
+ 127 │   name              = "/ecs/miguel-aluguel-backend"
+ 128 │   retention_in_days = 14
+ 129 └ }
+────────────────────────────────────────
+
+
+AWS-0017 (LOW): Log group is not encrypted.
+════════════════════════════════════════
+CloudWatch log groups are encrypted by default, however, to get the full benefit of controlling key rotation and other KMS aspects a KMS CMK should be used.
+
+
+See https://avd.aquasec.com/misconfig/aws-0017
+────────────────────────────────────────
+ compute.tf:131-134
+────────────────────────────────────────
+ 131 ┌ resource "aws_cloudwatch_log_group" "frontend_logs" {
+ 132 │   name              = "/ecs/miguel-aluguel-frontend"
+ 133 │   retention_in_days = 14
+ 134 └ }
+────────────────────────────────────────
+
+
+AWS-0034 (LOW): Cluster does not have container insights enabled.
+════════════════════════════════════════
+Cloudwatch Container Insights provide more metrics and logs for container based applications and micro services.
+
+
+See https://avd.aquasec.com/misconfig/aws-0034
+────────────────────────────────────────
+ compute.tf:119-121
+────────────────────────────────────────
+ 119 ┌ resource "aws_ecs_cluster" "pi_cluster" {
+ 120 │   name = "miguel-aluguel-cluster"
+ 121 └ }
+────────────────────────────────────────
+
+
+
+database.tf (terraform)
+=======================
+Tests: 4 (SUCCESSES: 0, FAILURES: 4)
+Failures: 4 (UNKNOWN: 0, LOW: 1, MEDIUM: 3, HIGH: 0, CRITICAL: 0)
+
+AWS-0077 (MEDIUM): Instance has very low backup retention period.
+════════════════════════════════════════
+RDS backup retention for clusters defaults to 1 day, this may not be enough to identify and respond to an issue. Backup retention periods should be set to a period that is a balance on cost and limiting risk.
+
+
+See https://avd.aquasec.com/misconfig/aws-0077
+────────────────────────────────────────
+ database.tf:27
+   via database.tf:2-37 (aws_db_instance.postgres_rds)
+────────────────────────────────────────
+   2   resource "aws_db_instance" "postgres_rds" {
+   .   
+  27 [   backup_retention_period = var.db_backup_retention_days
+  ..   
+  37   }
+────────────────────────────────────────
+
+
+AWS-0133 (LOW): Instance does not have performance insights enabled.
+════════════════════════════════════════
+Enabling Performance insights allows for greater depth in monitoring data.
+For example, information about active sessions could help diagose a compromise or assist in the investigation
+
+
+See https://avd.aquasec.com/misconfig/aws-0133
+────────────────────────────────────────
+ database.tf:2-37
+────────────────────────────────────────
+   2 ┌ resource "aws_db_instance" "postgres_rds" {
+   3 │   identifier             = "miguel-aluguel-db"
+   4 │   engine                 = "postgres"
+   5 │   engine_version         = "17"
+   6 │   instance_class         = "db.t3.micro"
+   7 │   allocated_storage      = 20
+   8 │   db_name                = var.DB_NAME
+   9 │   username               = var.DB_USERNAME
+  10 └   password               = var.DB_PASSWORD
+  ..   
+────────────────────────────────────────
+
+
+AWS-0176 (MEDIUM): Instance does not have IAM Authentication enabled
+════════════════════════════════════════
+Ensure IAM Database Authentication is enabled for RDS database instances to manage database access
+
+See https://avd.aquasec.com/misconfig/aws-0176
+────────────────────────────────────────
+ database.tf:2-37
+────────────────────────────────────────
+   2 ┌ resource "aws_db_instance" "postgres_rds" {
+   3 │   identifier             = "miguel-aluguel-db"
+   4 │   engine                 = "postgres"
+   5 │   engine_version         = "17"
+   6 │   instance_class         = "db.t3.micro"
+   7 │   allocated_storage      = 20
+   8 │   db_name                = var.DB_NAME
+   9 │   username               = var.DB_USERNAME
+  10 └   password               = var.DB_PASSWORD
+  ..   
+────────────────────────────────────────
+
+
+AWS-0177 (MEDIUM): Instance does not have Deletion Protection enabled
+════════════════════════════════════════
+Ensure deletion protection is enabled for RDS database instances.
+
+See https://avd.aquasec.com/misconfig/aws-0177
+────────────────────────────────────────
+ database.tf:2-37
+────────────────────────────────────────
+   2 ┌ resource "aws_db_instance" "postgres_rds" {
+   3 │   identifier             = "miguel-aluguel-db"
+   4 │   engine                 = "postgres"
+   5 │   engine_version         = "17"
+   6 │   instance_class         = "db.t3.micro"
+   7 │   allocated_storage      = 20
+   8 │   db_name                = var.DB_NAME
+   9 │   username               = var.DB_USERNAME
+  10 └   password               = var.DB_PASSWORD
+  ..   
+────────────────────────────────────────
+
+
+
+network.tf (terraform)
+======================
+Tests: 1 (SUCCESSES: 0, FAILURES: 1)
+Failures: 1 (UNKNOWN: 0, LOW: 0, MEDIUM: 1, HIGH: 0, CRITICAL: 0)
+
+AWS-0178 (MEDIUM): VPC does not have VPC Flow Logs enabled.
+════════════════════════════════════════
+VPC Flow Logs provide visibility into network traffic that traverses the VPC and can be used to detect anomalous traffic or insight during security workflows.
+
+
+See https://avd.aquasec.com/misconfig/aws-0178
+────────────────────────────────────────
+ network.tf:4-14
+────────────────────────────────────────
+   4 ┌ resource "aws_vpc" "vpc_miguel_aluguel" {
+   5 │   cidr_block = "10.20.0.0/20"
+   6 │ 
+   7 │   enable_dns_support   = true
+   8 │   enable_dns_hostnames = true
+   9 │ 
+  10 │   tags = {
+  11 │       Name = "vpc_miguel_aluguel"
+  12 └     }
+  ..   
+────────────────────────────────────────
+
+
+
+security.tf (terraform)
+=======================
+Tests: 4 (SUCCESSES: 0, FAILURES: 4)
+Failures: 4 (UNKNOWN: 0, LOW: 0, MEDIUM: 0, HIGH: 0, CRITICAL: 4)
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ security.tf:86
+   via security.tf:80-87 (aws_vpc_security_group_egress_rule.app_http_out)
+────────────────────────────────────────
+  80   resource "aws_vpc_security_group_egress_rule" "app_http_out" {
+  81     security_group_id = aws_security_group.app_access.id
+  82     description       = "HTTP para repositorios apt (Ubuntu)"
+  83     from_port         = 80
+  84     to_port           = 80
+  85     ip_protocol       = "tcp"
+  86 [   cidr_ipv4         = "0.0.0.0/0"
+  87   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ security.tf:76
+   via security.tf:70-77 (aws_vpc_security_group_egress_rule.app_https_out)
+────────────────────────────────────────
+  70   resource "aws_vpc_security_group_egress_rule" "app_https_out" {
+  71     security_group_id = aws_security_group.app_access.id
+  72     description       = "HTTPS para SSM e atualizacoes"
+  73     from_port         = 443
+  74     to_port           = 443
+  75     ip_protocol       = "tcp"
+  76 [   cidr_ipv4         = "0.0.0.0/0"
+  77   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ security.tf:124
+   via security.tf:118-125 (aws_vpc_security_group_egress_rule.back_https)
+────────────────────────────────────────
+ 118   resource "aws_vpc_security_group_egress_rule" "back_https" {
+ 119     security_group_id = aws_security_group.back-pi.id
+ 120     description       = "HTTPS para servicos externos"
+ 121     from_port         = 443
+ 122     to_port           = 443
+ 123     ip_protocol       = "tcp"
+ 124 [   cidr_ipv4         = "0.0.0.0/0"
+ 125   }
+────────────────────────────────────────
+
+
+AWS-0104 (CRITICAL): Security group rule allows unrestricted egress to any IP address.
+════════════════════════════════════════
+Opening up ports to connect out to the public internet is generally to be avoided. You should restrict access to IP addresses or ranges that are explicitly required where possible.
+
+
+See https://avd.aquasec.com/misconfig/aws-0104
+────────────────────────────────────────
+ security.tf:105
+   via security.tf:99-106 (aws_vpc_security_group_egress_rule.front_https)
+────────────────────────────────────────
+  99   resource "aws_vpc_security_group_egress_rule" "front_https" {
+ 100     security_group_id = aws_security_group.front-pi.id
+ 101     description       = "HTTPS para servicos externos"
+ 102     from_port         = 443
+ 103     to_port           = 443
+ 104     ip_protocol       = "tcp"
+ 105 [   cidr_ipv4         = "0.0.0.0/0"
+ 106   }
+────────────────────────────────────────
+
+

@@ -20,6 +20,7 @@ variable "ecr_backend" {
 variable "HASH_TOKEN" {
   description = "Hash para o JWT"
   type        = string
+  sensitive   = true # S4: não aparece no plan/apply nem nos logs do Terraform
 }
 
 variable "DB_USERNAME" {
@@ -34,6 +35,7 @@ variable "DB_NAME" {
 variable "DB_PASSWORD" {
   description = "Senha do usuário do banco para a aplicação"
   type        = string
+  sensitive   = true # S4: não aparece no plan/apply nem nos logs do Terraform
 }
 
 # ---------- Backup do banco (Parte D) ----------

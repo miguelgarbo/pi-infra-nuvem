@@ -60,3 +60,28 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_policy" {
 
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
+
+# ---------- Menor privilégio para ler os segredos (S4 + S5) ----------
+# A role de execução só pode LER (ssm:GetParameters) os DOIS parâmetros da
+# aplicação, e nada mais do Parameter Store. Como os parâmetros usam a chave
+# gerenciada aws/ssm, não é preciso conceder kms:Decrypt.
+data "aws_iam_policy_document" "ecs_read_app_secrets" {
+  statement {
+    sid     = "LerSegredosDaAplicacao"
+    actions = ["ssm:GetParameters"]
+    resources = [
+      aws_ssm_parameter.db_password.arn,
+      aws_ssm_parameter.hash_token.arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "ecs_read_app_secrets" {
+  name   = "ler-segredos-miguel-aluguel"
+  role   = aws_iam_role.ecs_task_execution_role.id
+  policy = data.aws_iam_policy_document.ecs_read_app_secrets.json
+}
+
+# Observação (S5): as tasks NÃO têm task_role_arn. A aplicação em si não possui
+# nenhuma permissão na AWS; só o agente do ECS (role de execução) tem, e
+# restrita a puxar imagens, enviar logs e ler os dois segredos acima.

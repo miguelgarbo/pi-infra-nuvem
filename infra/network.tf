@@ -8,22 +8,25 @@ resource "aws_vpc" "vpc_miguel_aluguel" {
   enable_dns_hostnames = true
 
   tags = {
-      Name = "vpc_miguel_aluguel"
-    }
-  
+    Name = "vpc_miguel_aluguel"
+  }
+
 }
 
 # Subnet pública para o Nginx / ALB
 # Faixa: 10.20.0.0/24 (IPs de 10.20.0.0 a 10.20.0.255)
 resource "aws_subnet" "subnet-pub-1" {
-  vpc_id                  = aws_vpc.vpc_miguel_aluguel.id
-  cidr_block              = "10.20.0.0/24"
-  map_public_ip_on_launch = true
+  vpc_id     = aws_vpc.vpc_miguel_aluguel.id
+  cidr_block = "10.20.0.0/24"
+  # Não atribui IP público automaticamente (Trivy AWS-0164). Só recebe IP
+  # público quem pede explicitamente: a EC2 do Nginx (associate_public_ip_address)
+  # e o NAT Gateway (Elastic IP).
+  map_public_ip_on_launch = false
 
   tags = {
-      Name = "subnet-pub-1"
-    }
-  
+    Name = "subnet-pub-1"
+  }
+
 }
 
 resource "aws_subnet" "subnet-priv-1" {
@@ -69,7 +72,7 @@ resource "aws_eip" "nat_eip" {
 # criar o NAT para liberar acesso a internet para a subnet privada 
 resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.nat_eip.id
-  subnet_id     = aws_subnet.subnet-pub-1.id 
+  subnet_id     = aws_subnet.subnet-pub-1.id
 
   tags = {
     Name = "natzao-miguel-aluguel"

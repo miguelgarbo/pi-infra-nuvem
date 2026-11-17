@@ -25,7 +25,26 @@ resource "aws_instance" "ec2-nginx-pi" {
 
   iam_instance_profile = aws_iam_instance_profile.ssm_nginx.name
 
-  user_data                   = <<-EOF
+  # ---------- Criptografia em repouso (S6) ----------
+  # Disco raiz criptografado, declarado explicitamente (Trivy AWS-0131).
+  # Sem kms_key_id, o EBS usa a chave gerenciada pela AWS (aws/ebs).
+  root_block_device {
+    volume_type           = "gp3"
+    encrypted             = true
+    delete_on_termination = true
+  }
+
+  # ---------- IMDSv2 obrigatório (S5) ----------
+  # Exige token de sessão para ler o metadata service, onde ficam as credenciais
+  # temporárias da role da instância. Bloqueia o roubo dessas credenciais
+  # por SSRF através do proxy Nginx (Trivy AWS-0028).
+  metadata_options {
+    http_endpoint               = "enabled"
+    http_tokens                 = "required"
+    http_put_response_hop_limit = 1
+  }
+
+  user_data = <<-EOF
     #!/bin/bash
     set -euxo pipefail
 
@@ -161,16 +180,24 @@ resource "aws_ecs_task_definition" "backend_task" {
           value = var.DB_USERNAME
         },
         {
-          name  = "DB_PASSWORD"
-          value = var.DB_PASSWORD
-        },
-        {
-          name  = "HASH_TOKEN"
-          value = var.HASH_TOKEN
-        },
-        {
           name  = "FRONT_URL"
           value = "http://${aws_instance.ec2-nginx-pi.public_ip}/"
+        }
+      ]
+
+      # ---------- Gestão de segredos (S4) ----------
+      # A senha do banco e o segredo do JWT não ficam em texto puro na task definition.
+      # O agente do ECS lê os parâmetros SecureString do SSM no início da task
+      # (com a role de execução, ver iam.tf) e os entrega ao container como variáveis
+      # de ambiente. Na task definition e no console aparece só o ARN do parâmetro.
+      secrets = [
+        {
+          name      = "DB_PASSWORD"
+          valueFrom = aws_ssm_parameter.db_password.arn
+        },
+        {
+          name      = "HASH_TOKEN"
+          valueFrom = aws_ssm_parameter.hash_token.arn
         }
       ]
 

@@ -1,0 +1,23 @@
+[
+ {
+  "RuleID": "hashicorp-tf-password",
+  "Description": "Identified a HashiCorp Terraform password field, risking unauthorized infrastructure configuration and security breaches.",
+  "StartLine": 10,
+  "EndLine": 10,
+  "StartColumn": 4,
+  "EndColumn": 39,
+  "Match": "password               = REDACTED ",
+  "Secret": "REDACTED",
+  "File": "infra/terraform/rds.tf",
+  "SymlinkFile": "",
+  "Commit": "0f10cb5e3074f4592e61096e0b46f96d0d51f609",
+  "Link": "https://github.com/miguelgarbo/pi-infra-nuvem/blob/0f10cb5e3074f4592e61096e0b46f96d0d51f609/infra/terraform/rds.tf#L10",
+  "Entropy": 2.9219282,
+  "Author": "Miguel Garbo",
+  "Email": "miguelggarbo@gmail.com",
+  "Date": "2026-11-13T14:31:44Z",
+  "Message": "feat: rascunhos arquivos terraform da infra do projeto",
+  "Tags": [],
+  "Fingerprint": "0f10cb5e3074f4592e61096e0b46f96d0d51f609:infra/terraform/rds.tf:hashicorp-tf-password:10"
+ }
+]
