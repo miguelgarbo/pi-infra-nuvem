@@ -41,7 +41,7 @@ variable "DB_PASSWORD" {
 variable "db_backup_retention_days" {
   description = "Dias de retenção dos backups automáticos do RDS (política mínima: no máximo 2 dias, seção 6.3)"
   type        = number
-  default     = 2
+  default     = 1 # o plano gratuito da AWS (Free plan) recusa retenção acima de 1 dia (FreeTierRestrictionError)
 
   validation {
     condition     = var.db_backup_retention_days >= 1 && var.db_backup_retention_days <= 2

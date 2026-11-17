@@ -1,0 +1,13 @@
+﻿# Evidencia B6 - backup automatico existente e criptografado
+# Conta 844153410768, regiao us-east-1, coletado em 2026-11-17 02:37:03 UTC
+
+$ aws rds describe-db-snapshots --db-instance-identifier miguel-aluguel-db --snapshot-type automated --query 'DBSnapshots[].{Snapshot:DBSnapshotIdentifier,Criado:SnapshotCreateTime,Status:Status,Criptografado:Encrypted}' --output table
+
+-------------------------------------------------------------
+|                    DescribeDBSnapshots                    |
++----------------+------------------------------------------+
+|  Criado        |  2026-11-17T02:33:18.908000+00:00        |
+|  Criptografado |  True                                    |
+|  Snapshot      |  rds:miguel-aluguel-db-2026-11-17-02-33  |
+|  Status        |  available                               |
++----------------+------------------------------------------+

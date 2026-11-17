@@ -119,7 +119,7 @@ A geração Son continua sendo o `backup_retention_period = 7` do próprio RDS.
 |---|---|
 | **Mecanismo** | Backup automático do RDS (geração Son), conforme a seção 6.3 para banco gerenciado |
 | **Configuração por código** | `infra/database.tf`: `backup_retention_period`, `backup_window`, `storage_encrypted`, `delete_automated_backups` e `copy_tags_to_snapshot` |
-| **Retenção** | **2 dias** (`var.db_backup_retention_days`). A variável tem uma regra de `validation` que rejeita valores fora de 1 a 2 no `terraform plan`. |
+| **Retenção** | **1 dia** (`var.db_backup_retention_days`). A variável tem uma regra de `validation` que rejeita valores fora de 1 a 2 no `terraform plan`. O valor seria 2, o máximo da seção 6.3, mas a conta usada está no plano gratuito da AWS (Free plan), que recusa retenção acima de 1 dia: o primeiro `terraform apply` com 2 dias falhou com `FreeTierRestrictionError`. Com 1 dia, a política continua dentro do limite do enunciado. |
 | **Criptografia** | `storage_encrypted = true`, declarado explicitamente. Os backups herdam a criptografia da instância. Comprovação: `StorageEncrypted: true` no `describe-db-instances` e `Encrypted: true` no snapshot automatizado. |
 | **Existência de cópia** | O RDS cria o primeiro backup automático logo depois de criar a instância. Ele aparece em *RDS → Snapshots → Sistema* e no comando abaixo. |
 | **Custo** | **US$ 0,00** no período do trabalho (ver B7). |
@@ -137,7 +137,7 @@ aws rds describe-db-snapshots --db-instance-identifier miguel-aluguel-db \
   --query 'DBSnapshots[].{Snapshot:DBSnapshotIdentifier,Criado:SnapshotCreateTime,Status:Status,Criptografado:Encrypted}' --output table
 ```
 
-**Expiração assíncrona.** O RDS remove os backups automáticos que saem da janela de retenção por um processo interno, sem garantia de horário exato. O grupo conta que uma cópia pode continuar visível algumas horas depois de completar 2 dias. O `delete_automated_backups = true` garante que, no `terraform destroy`, os backups automáticos sejam apagados junto com a instância, sem deixar nada sendo cobrado.
+**Expiração assíncrona.** O RDS remove os backups automáticos que saem da janela de retenção por um processo interno, sem garantia de horário exato. O grupo conta que uma cópia pode continuar visível algumas horas depois de completar 1 dia. O `delete_automated_backups = true` garante que, no `terraform destroy`, os backups automáticos sejam apagados junto com a instância, sem deixar nada sendo cobrado.
 
 Escolhas deliberadas para o ambiente acadêmico, que **seriam diferentes em produção**:
 
@@ -146,9 +146,9 @@ Escolhas deliberadas para o ambiente acadêmico, que **seriam diferentes em prod
 
 ### O que a política mínima não protege, comparada à GFS
 
-| Situação | Política mínima (2 dias) | GFS |
+| Situação | Política mínima (1 dia) | GFS |
 |---|---|---|
-| Erro descoberto depois de 3 dias (ex.: locações apagadas na sexta, percebido na segunda seguinte) | **Não recupera**, o ponto já expirou | Recupera pelo Son (até 7 dias) |
+| Erro descoberto depois de 2 dias (ex.: locações apagadas na sexta, percebido na segunda seguinte) | **Não recupera**, o ponto já expirou | Recupera pelo Son (até 7 dias) |
 | Dado corrompido descoberto semanas depois | Não recupera | Recupera pelo Father (até 5 semanas) |
 | Consulta ou auditoria de um mês antigo | Não recupera | Recupera pelo Grandfather (até 12 meses) |
 | Perda da região us-east-1 | Não recupera, as cópias ficam na mesma região | Recupera pelo Grandfather copiado em us-east-2 |
@@ -162,7 +162,7 @@ Escolhas deliberadas para o ambiente acadêmico, que **seriam diferentes em prod
 | Item | Valor |
 |---|---|
 | Volume do banco | Poucos MB (dados de teste) |
-| Cópias retidas | No máximo 2 (2 dias) |
+| Cópias retidas | No máximo 1 a 2 (1 dia de retenção) |
 | Franquia gratuita | Backups do RDS não são cobrados até 100% do armazenamento provisionado (`allocated_storage = 20` GB) |
 | Período cobrado | Só enquanto o ambiente está no ar; o `destroy` apaga os backups (`delete_automated_backups = true`) |
 | **Custo estimado** | **US$ 0,00** |

@@ -1,0 +1,11 @@
+﻿# Evidencia B6 - configuracao do backup automatico do RDS
+# Conta 844153410768, regiao us-east-1, coletado em 2026-11-17 02:37:03 UTC
+
+$ aws rds describe-db-instances --db-instance-identifier miguel-aluguel-db --query 'DBInstances[0].{Retencao:BackupRetentionPeriod,Janela:PreferredBackupWindow,Criptografado:StorageEncrypted,UltimoPontoRestauravel:LatestRestorableTime}'
+
+{
+    "Retencao": 1,
+    "Janela": "06:00-06:30",
+    "Criptografado": true,
+    "UltimoPontoRestauravel": "2026-11-17T02:33:57+00:00"
+}
