@@ -12,7 +12,7 @@ Projeto Integrador — Uniamérica Descomplica — Prof. Gildomiro Bairros
 Sistema web para gerenciamento de frota e reserva de aluguel de carros, com frontend em React, backend em Java/Spring Boot e banco PostgreSQL, hospedado na **AWS**.
 
 - **Entrega 1:** a infraestrutura foi projetada para a região `us-east-2` (Ohio): uma VPC com uma sub-rede pública (proxy Nginx e NAT Gateway) e uma sub-rede privada (hosts Amazon ECS do frontend e do backend e instância do PostgreSQL).
-- **Entrega 2:** a arquitetura foi implementada com **Terraform**. Um `terraform apply` provisiona a VPC, o proxy Nginx, os serviços no ECS Fargate, o banco no RDS e o acesso administrativo. O detalhamento está em [`infra/terraform/README.md`](infra/terraform/README.md).
+- **Entrega 2:** a arquitetura foi implementada com **Terraform**. Um `terraform apply` provisiona a VPC, o proxy Nginx, os serviços no ECS Fargate, o banco no RDS e o acesso administrativo. O detalhamento está em [`infra/terraform/README.md`](infra/README.md).
 
 ## Integrantes e responsabilidades
 
