@@ -31,12 +31,12 @@ CloudWatch log groups are encrypted by default, however, to get the full benefit
 
 See https://avd.aquasec.com/misconfig/aws-0017
 ────────────────────────────────────────
- compute.tf:126-129
+ compute.tf:162-165
 ────────────────────────────────────────
- 126 ┌ resource "aws_cloudwatch_log_group" "backend_logs" {
- 127 │   name              = "/ecs/miguel-aluguel-backend"
- 128 │   retention_in_days = 14
- 129 └ }
+ 162 ┌ resource "aws_cloudwatch_log_group" "backend_logs" {
+ 163 │   name              = "/ecs/miguel-aluguel-backend"
+ 164 │   retention_in_days = 14
+ 165 └ }
 ────────────────────────────────────────
 
 
@@ -47,12 +47,12 @@ CloudWatch log groups are encrypted by default, however, to get the full benefit
 
 See https://avd.aquasec.com/misconfig/aws-0017
 ────────────────────────────────────────
- compute.tf:131-134
+ compute.tf:167-170
 ────────────────────────────────────────
- 131 ┌ resource "aws_cloudwatch_log_group" "frontend_logs" {
- 132 │   name              = "/ecs/miguel-aluguel-frontend"
- 133 │   retention_in_days = 14
- 134 └ }
+ 167 ┌ resource "aws_cloudwatch_log_group" "frontend_logs" {
+ 168 │   name              = "/ecs/miguel-aluguel-frontend"
+ 169 │   retention_in_days = 14
+ 170 └ }
 ────────────────────────────────────────
 
 
@@ -63,11 +63,11 @@ Cloudwatch Container Insights provide more metrics and logs for container based 
 
 See https://avd.aquasec.com/misconfig/aws-0034
 ────────────────────────────────────────
- compute.tf:119-121
+ compute.tf:155-157
 ────────────────────────────────────────
- 119 ┌ resource "aws_ecs_cluster" "pi_cluster" {
- 120 │   name = "miguel-aluguel-cluster"
- 121 └ }
+ 155 ┌ resource "aws_ecs_cluster" "pi_cluster" {
+ 156 │   name = "miguel-aluguel-cluster"
+ 157 └ }
 ────────────────────────────────────────
 
 
@@ -182,8 +182,8 @@ See https://avd.aquasec.com/misconfig/aws-0178
    8 │   enable_dns_hostnames = true
    9 │ 
   10 │   tags = {
-  11 │       Name = "vpc_miguel_aluguel"
-  12 └     }
+  11 │     Name = "vpc_miguel_aluguel"
+  12 └   }
   ..   
 ────────────────────────────────────────
 
