@@ -21,7 +21,7 @@ output "private_ip_nginx" {
 output "url_app" {
   description = "URL pública para acessar a aplicação Miguel Aluguel"
 
-  value = "http://${aws_instance.ec2-nginx-pi.public_ip}/welcome"
+  value = "https://${aws_instance.ec2-nginx-pi.public_ip}/welcome"
 }
 
 output "ssm_command" {

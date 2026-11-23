@@ -52,16 +52,52 @@ resource "aws_instance" "ec2-nginx-pi" {
     apt-get update -y
 
     # Instala Nginx e ferramentas de diagnóstico
-    DEBIAN_FRONTEND=noninteractive apt-get install -y nginx dnsutils curl
+    DEBIAN_FRONTEND=noninteractive apt-get install -y nginx dnsutils curl openssl
+
+    # ---------- S1: endurecimento do SSH ----------
+    # Sem login por senha e sem login direto como root. A porta 22 nem está
+    # aberta no security group (acesso administrativo pelo SSM), mas o sshd
+    # fica endurecido caso alguém libere a porta no futuro.
+    cat > /etc/ssh/sshd_config.d/01-hardening.conf <<'SSHD'
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    PermitRootLogin no
+    SSHD
+    systemctl restart ssh || true
+
+    # ---------- S3: certificado TLS autoassinado ----------
+    # O IP público é lido do metadata com IMDSv2 (token obrigatório, ver S5)
+    # e entra no certificado como CN e subjectAltName.
+    TOKEN=$(curl -sf -X PUT http://169.254.169.254/latest/api/token -H "X-aws-ec2-metadata-token-ttl-seconds: 300") || TOKEN=""
+    PUBLIC_IP=$(curl -sf -H "X-aws-ec2-metadata-token: $TOKEN" http://169.254.169.254/latest/meta-data/public-ipv4) || PUBLIC_IP="127.0.0.1"
+    mkdir -p /etc/nginx/ssl
+    openssl req -x509 -nodes -newkey rsa:2048 -days 30 \
+      -keyout /etc/nginx/ssl/selfsigned.key -out /etc/nginx/ssl/selfsigned.crt \
+      -subj "/CN=$PUBLIC_IP" -addext "subjectAltName=IP:$PUBLIC_IP"
+    chmod 600 /etc/nginx/ssl/selfsigned.key
 
     # Configuração do Nginx
     cat > /etc/nginx/sites-available/default <<'NGINX'
 
+    # HTTP: só redireciona para HTTPS (S3)
     server {
         listen 80 default_server;
         listen [::]:80 default_server;
+        server_name _;
+
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl default_server;
+        listen [::]:443 ssl default_server;
 
         server_name _;
+
+        ssl_certificate     /etc/nginx/ssl/selfsigned.crt;
+        ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
+        ssl_protocols       TLSv1.2 TLSv1.3;
+        server_tokens       off;
 
         # DNS privado da VPC AWS
         resolver 10.20.0.2 valid=10s ipv6=off;
@@ -181,7 +217,7 @@ resource "aws_ecs_task_definition" "backend_task" {
         },
         {
           name  = "FRONT_URL"
-          value = "http://${aws_instance.ec2-nginx-pi.public_ip}/"
+          value = "https://${aws_instance.ec2-nginx-pi.public_ip}/"
         }
       ]
 
@@ -268,7 +304,7 @@ resource "aws_ecs_task_definition" "frontend_task" {
       }
 
       environment = [
-        { name = "VITE_API_URL", value = "http://${aws_instance.ec2-nginx-pi.public_ip}/api" }
+        { name = "VITE_API_URL", value = "https://${aws_instance.ec2-nginx-pi.public_ip}/api" }
       ]
     }
   ])
