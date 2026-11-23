@@ -52,7 +52,7 @@ O diagrama representa a AWS na região `us-east-2` (Ohio), com a VPC `vpc-pi-inf
 
 ### Fluxos numerados
 
-1. **Fluxo 1 — Usuário final acessando a aplicação:** o navegador do usuário envia uma requisição HTTPS (TCP 443) para o Elastic IP do Nginx, passando pelo Internet Gateway. O Nginx (`sg-nginx`, sub-rede pública) encaminha as rotas `/*` para o ECS Service do frontend (TCP 80, `sg-frontend`) e as rotas `/api` para o ECS Service do backend (TCP 8080, `sg-backend`), ambos na sub-rede privada. O backend consulta o PostgreSQL (TCP 5432, `sg-database`), e a resposta volta pelo mesmo caminho.
+1. **Fluxo 1 — Usuário final acessando a aplicação:** o navegador do usuário envia uma requisição HTTPS (TCP 443) para o Elastic IP do Nginx, passando pelo Internet Gateway. O Nginx (`sg-nginx`, sub-rede pública) encaminha as rotas `/*` para o ECS Service do frontend (TCP 80, `front-pi`) e as rotas `/api` para o ECS Service do backend (TCP 8080, `back-pi`), ambos na sub-rede privada. O backend consulta o PostgreSQL (TCP 5432, `sg-database`), e a resposta volta pelo mesmo caminho.
 2. **Fluxo 2 — Administrador acessando via SSH:** o administrador se autentica na AWS (IAM) e abre uma sessão no AWS Systems Manager Session Manager por HTTPS/TLS. O SSM Agent de cada instância mantém uma conexão de saída (TCP 443) com os endpoints da AWS, pelo Internet Gateway no caso do Nginx e pelo NAT Gateway no caso das instâncias privadas. O SSH é feito por um túnel sobre essa sessão (`ssh` com `ProxyCommand` do SSM), sem nenhuma porta 22 aberta nos grupos de segurança (ver ADR-001).
 3. **Fluxo 3 — Instância privada acessando a internet pelo NAT:** os hosts ECS e a instância do PostgreSQL, sem IP público, enviam o tráfego destinado à internet (pull de imagens no Amazon ECR, atualizações do sistema operacional, comunicação do SSM Agent) para o NAT Gateway na sub-rede pública, conforme a rota `0.0.0.0/0` da `pv-subnet-rt`. O NAT Gateway traduz o endereço de origem para o seu IP público e encaminha o tráfego ao Internet Gateway. As respostas retornam pelo mesmo caminho, e nenhuma conexão iniciada na internet consegue alcançar as instâncias privadas.
 
@@ -121,15 +121,15 @@ O acesso administrativo é feito exclusivamente pelo **AWS Systems Manager (Sess
 | Grupo de segurança | Direção | Protocolo | Porta | Origem/Destino | Justificativa |
 |---|---|---|---|---|---|
 | sg-nginx | Entrada | TCP | 443 | `0.0.0.0/0` | Fluxo 1: usuários acessam a aplicação via HTTPS. É o único ponto de entrada pública da arquitetura. |
-| sg-nginx | Saída | TCP | 80 | sg-frontend | Encaminha as rotas `/*` ao frontend. |
-| sg-nginx | Saída | TCP | 8080 | sg-backend | Encaminha as rotas `/api` ao backend. |
+| sg-nginx | Saída | TCP | 80 | front-pi | Encaminha as rotas `/*` ao frontend. |
+| sg-nginx | Saída | TCP | 8080 | back-pi | Encaminha as rotas `/api` ao backend. |
 | sg-nginx | Saída | TCP | 443 | `0.0.0.0/0` | O SSM Agent e as atualizações do SO acessam endpoints da AWS pelo Internet Gateway (a instância tem IP público). |
-| sg-frontend | Entrada | TCP | 80 | sg-nginx | Somente o proxy acessa o frontend. |
-| sg-frontend | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
-| sg-backend | Entrada | TCP | 8080 | sg-nginx | Somente o proxy chama a API. O frontend não acessa o backend diretamente. |
-| sg-backend | Saída | TCP | 5432 | sg-database | Conexão com o PostgreSQL. |
-| sg-backend | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
-| sg-database | Entrada | TCP | 5432 | sg-backend | O banco aceita conexões apenas do backend. |
+| front-pi | Entrada | TCP | 80 | sg-nginx | Somente o proxy acessa o frontend. |
+| front-pi | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
+| back-pi | Entrada | TCP | 8080 | sg-nginx | Somente o proxy chama a API. O frontend não acessa o backend diretamente. |
+| back-pi | Saída | TCP | 5432 | sg-database | Conexão com o PostgreSQL. |
+| back-pi | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Pull da imagem no ECR, SSM Agent e envio de logs. |
+| sg-database | Entrada | TCP | 5432 | back-pi | O banco aceita conexões apenas do backend. |
 | sg-database | Saída | TCP | 443 | `0.0.0.0/0` (via NAT Gateway) | Exclusivo para o SSM Agent e atualizações do SO. |
 
 ## 5.6 Tecnologias

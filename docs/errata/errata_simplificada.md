@@ -1,14 +1,6 @@
-# Errata simplificada: o que o enunciado realmente pede
+# Errata simplificada
 
-Projeto Integrador, Entrega 2 (Uniamérica Descomplica)
-
-O enunciado pede bem menos do que o rascunho inicial do `errata.md` continha. Este documento resume o que é necessário e o que pode ficar de fora.
-
-## O que a seção 8 pede da errata
-
-Só isto: **toda divergência entre o que foi projetado na Entrega 1 e o que foi implantado, com o motivo.** Se a mudança alterou uma decisão, cite o número do ADR afetado. O ADR original recebe o status "substituída" e um novo ADR é criado. Não há formato obrigatório, e uma tabela simples basta.
-
-## Versão simples (o suficiente)
+## Versão simples 
 
 | # | O que mudou | Entrega 1 | Implantado | Motivo | ADR |
 |---|---|---|---|---|---|
